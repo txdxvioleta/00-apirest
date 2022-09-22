@@ -1,44 +1,106 @@
-//imports:
+//* imports:
 const express = require('express');
 const mysql = require('mysql');
 const port = 3500;
 const app = express();
+//const bodyParser = require('body-parser');
+//body-parser:
+//app.use(bodyParser.json());
 
-//mysql:
+//Middlewares:
+
+//Reemplaza al body-parser
+app.use(express.json());
+
+//* mysql config:
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: '',
-  database: '00_apirest',
+  database: '00-api_rest',
 });
 
-//Routes:
+//* Routes:
 app.get('/', (req, res) => {
   res.send('Welcome to my API!');
 });
 
-//endpoints
+//*endpoints:
+
+// GET:
 app.get('/users', (req, res) => {
-  res.send('List of users:');
+  const sql_query = 'SELECT * FROM users';
+
+  connection.query(sql_query, (error, result) => {
+    //Verifico si existe algún error:
+    if (error) throw error;
+
+    //Si existen registros los muestro:
+    if (result.length > 0) {
+      res.json(result);
+      return;
+    }
+    res.send('No results');
+  });
 });
 
-app.get('/user/:id', (req, res) => {
+// GET:id
+app.get('/users/:id', (req, res) => {
   const id = req.params.id;
-  res.send('Get user by id:' + id);
+
+  const sql_query = `SELECT * FROM users WHERE id = ${id}`;
+  connection.query(sql_query, (error, result) => {
+    //Verifico si hay errores:
+    if (error) throw error;
+
+    //Si hay un resultado lo muestro:
+    if (result.length > 0) {
+      res.json(result);
+    } else {
+      res.send('User not found');
+      return;
+    }
+  });
 });
 
+// POST:
 app.post('/add', (req, res) => {
-  res.send('New user added');
+  const sql_query = 'INSERT INTO users SET ?';
+
+  const userObj = {
+    name: req.body.name,
+    lastname: req.body.lastname,
+    age: req.body.age,
+  };
+
+  connection.query(sql_query, userObj, (error) => {
+    if (error) throw error;
+    res.send('User added');
+  });
 });
 
+// PUT:
 app.put('/update/:id', (req, res) => {
-  const id = req.params.id;
-  res.send('Update user: ' + id);
+  //* Forma amateur:
+  //const sql_query = `UPDATE users SET name = '${name}', lastname = '${lastname}', age = '${age}' WHERE id = '${id}'`;
+
+  //* Forma pro:
+  const sql_query = 'UPDATE users SET ? WHERE id = ?';
+
+  connection.query(sql_query, [req.body, req.params.id], (error) => {
+    if (error) throw error;
+    res.send('User updated');
+  });
 });
 
+// DELETE:id
 app.delete('/delete/:id', (req, res) => {
-  const id = req.params.id;
-  res.send('Deleted user: ' + id);
+  const sql_query = 'DELETE FROM users WHERE id = ?';
+
+  connection.query(sql_query, [req.params.id], (error) => {
+    if (error) throw error;
+    res.send('User deleted');
+  });
 });
 
 //Check connect:

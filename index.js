@@ -1,3 +1,7 @@
-const serverConfig = require('./src/server/serverConfig');
+//* imports:
+const app = require('./src/server/serverConfig');
 
-serverConfig();
+//* listen app:
+app.listen(app.get('port'), () => {
+  console.log(`SERVER OK! (PORT: ${app.get('port')})`);
+});

@@ -3,11 +3,23 @@ const connection = require('../database/dbConfig');
 
 // GET:
 const getUsers = async (req, res) => {
-  await connection.query('SELECT * FROM users', (error, result) => {
-    !error && result.length > 0
-      ? res.json(result)
-      : res.status(500).json({ message: 'There are no users yet' });
-  });
+  //Si está definido el query realizo la consulta de forma paginada
+  if (req.query.page) {
+    const size = 10;
+    const operation = (req.query.page - 1) * size;
+
+    await connection.query(`SELECT * FROM users LIMIT ${operation}, ${size}`, (error, result) => {
+      !error && result.length > 0 ? res.json(result) : res.status(500).json({ message: 'No more users' });
+    });
+  } else {
+    await connection.query('SELECT * FROM users', (error, result) => {
+      !error && result.length > 0
+        ? res.json(result)
+        : res.status(500).json({ message: 'There are no users yet' });
+    });
+  }
+
+  /*  */
 };
 
 // GET id:

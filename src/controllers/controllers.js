@@ -3,23 +3,34 @@ const connection = require('../database/dbConfig');
 
 // GET:
 const getUsers = async (req, res) => {
-  //Si está definido el query realizo la consulta de forma paginada
+  // Initializations:
+  let GET_query = `SELECT * FROM users `;
+  let limit = '';
+  let where = '';
+
+  // Filters:
+  if (req.query.age) {
+    where += `WHERE age < ${req.query.age}`;
+  }
+
+  if (req.query.salary) {
+    where += ` AND salary > ${req.query.salary}`;
+  }
+
+  if (req.query.gender) {
+    where += ` AND gender = '${req.query.gender}'`;
+  }
+
+  // Pagination:
   if (req.query.page) {
     const size = 10;
     const operation = (req.query.page - 1) * size;
-
-    await connection.query(`SELECT * FROM users LIMIT ${operation}, ${size}`, (error, result) => {
-      !error && result.length > 0 ? res.json(result) : res.status(500).json({ message: 'No more users' });
-    });
-  } else {
-    await connection.query('SELECT * FROM users', (error, result) => {
-      !error && result.length > 0
-        ? res.json(result)
-        : res.status(500).json({ message: 'There are no users yet' });
-    });
+    limit += `LIMIT ${operation}, ${size}`;
   }
-
-  /*  */
+  // Query:
+  await connection.query(`${GET_query} ${where} ${limit}`, (error, result) => {
+    !error && result.length > 0 ? res.json(result) : res.status(500).json({ message: 'No more users' });
+  });
 };
 
 // GET id:
@@ -32,20 +43,15 @@ const getUserById = async (req, res) => {
 };
 
 // POST:
-//Crear nueva info status = 201;
-
 const addUser = async (req, res) => {
   await connection.query('INSERT INTO users SET ?', [req.body], (error) => {
     !error
-      ? res.status(201).json({
-          message: 'User added',
-        })
+      ? res.status(201).json({ message: 'User added' })
       : res.status(500).json({ message: 'Something goes wrong' });
   });
 };
 
 // PUT:
-//update status code = 202
 const updateUser = async (req, res) => {
   await connection.query('UPDATE users SET ? WHERE id = ?', [req.body, req.params.id], (error, result) => {
     !error && result.affectedRows > 0
